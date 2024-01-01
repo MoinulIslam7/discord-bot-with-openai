@@ -1,20 +1,23 @@
 {
-  "dependencies": {
-    "discord.js": "^14.14.1",
-    "dotenv": "^16.3.1",
-    "openai": "^4.20.1"
-  },
   "name": "discord-bot",
   "version": "1.0.0",
   "main": "index.js",
-  "directories": {
-    "example": "examples"
-  },
+  "repository": "git@github.com:Moinul78/discord-bot.git",
+  "author": "Moinul78 <moinul@coredevs.ltd>",
+  "license": "MIT",
   "scripts": {
-    "start": "node index",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "env-cmd -f .env nodemon src/index.js",
+    "prod": "env-cmd -f config/prod.env node src/index.js"
   },
-  "author": "",
-  "license": "ISC",
-  "description": ""
+  "dependencies": {
+    "@discordjs/voice": "^0.16.1",
+    "axios": "^1.6.2",
+    "dotenv": "^16.3.1",
+    "discord.js": "^14.14.1",
+    "env-cmd": "^10.1.0",
+    "libsodium-wrappers": "^0.7.13",
+    "nodemon": "^3.0.1",
+    "openai": "^4.0.0",
+    "ytdl-core": "^4.11.5"
+  }
 }
