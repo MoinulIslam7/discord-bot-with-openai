@@ -1,7 +1,7 @@
 //making text to image using stable diffusion api
 // reference:https://stablediffusionapi.com/docs/stable-diffusion-api/
 
-const { SlashCommandBuilder, userMention } = require("discord.js");
+const { SlashCommandBuilder, userMention, AttachmentBuilder } = require("discord.js");
 const { req } = require("../utils/fetchApi");
 
 module.exports = {
@@ -17,15 +17,18 @@ module.exports = {
         await interaction.deferReply({ ephemeral: false });
         try {
             const user = userMention(interaction.user.id);
-            const description = await interaction.options.getString('description');
+            const question = await interaction.options.getString('question');
 
             const response = await req({
                 base: 'stableDiff',
-                uri: 'api/v3/text2img',
+                uri: 'api/v4/dreambooth',
                 method: 'POST',
                 redirect: 'follow',
+                withCredentials: false,
                 data: {
                     "key": `${process.env.STABLE_DIFFUSION_API_KEY}`,
+                    "model_id": "sdxl",
+                    "prompt": `${question}`,
                     "negative_prompt": null,
                     "width": "1024",
                     "height": "1024",
@@ -52,15 +55,35 @@ module.exports = {
                     "track_id": null
                 }
             });
+
             const { data } = response;
-            if (data.status === 'success') {
-                const imageUrl = data.output[0];
-                const imageAttachment = new MessageAttachment(imageUrl);
-                await interaction.editReply({
-                    content: 'Here is the generated image:',
-                    files: [imageAttachment],
+            if (data.status === 'processing') {
+                return await interaction.editReply({
+                    content: `${user}\n Prompt: "${question}"\n Result:Your image is processing in background, you can get this image using /fetchDiffution slashcommand\n id: ${data.id}.`,
+                    ephemeral: true
                 });
             }
+            else if (data.status === 'success') {
+                const raw = await req({
+                    fullUrl: data.output[0],
+                    method: "GET",
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                })
+                const { data: base } = raw;
+                const image = Buffer.from(base, 'base64');
+                const attacment = new AttachmentBuilder(image, { name: 'image.png' });
+                return await interaction.editReply({
+                    content: `${user}\n Prompt: "${question}"\n`,
+                    files: [attacment],
+                    ephemeral: true
+                });
+            }
+            return await interaction.editReply({
+                content: `${user}\n Prompt: "${question}"\n Result: Bot is confused!`,
+                ephemeral: true
+            });
         } catch (err) {
             await interaction.editReply({ content: 'An error occurred while processing the command.', ephemeral: true });
             console.log({ err });
